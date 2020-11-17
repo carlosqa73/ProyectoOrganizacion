@@ -38,7 +38,7 @@ main:
 	#mueve el valor leido a t0
 	move $t0, $v0
 	
-	#jal validarOpcion
+	jal validarOpcion
 	
 	#opci0n 4 = salir
 	beq $t0, 4, exit
@@ -53,55 +53,69 @@ main:
 	beq $t0, 3, opcion3
 	
 	
-opcion1:
-	li $v0, 4
-	la $a0, o1
-	syscall
+	opcion1:
+		li $v0, 4
+		la $a0, o1
+		syscall
 	
-	j main
+		j main
 	
-opcion2: 
-	li $v0, 4
-	la $a0, o2
-	syscall 
+	opcion2: 
+		li $v0, 4
+		la $a0, o2
+		syscall 
 	
-	j main
+		j main
 	
-opcion3: 
-	li $v0, 4
-	la $a0, o3
-	syscall
+	opcion3: 
+		li $v0, 4
+		la $a0, o3
+		syscall
 	
-	j main
+		j main
 	
-exit: 
-	#mensaje de salida
-	li $v0, 4
-	la $a0, salida
-	syscall
+	exit: 
+		#mensaje de salida
+		li $v0, 4
+		la $a0, salida
+		syscall
 	
-	#terminar el programa
-	li $v0, 10
-	syscall
+		#terminar el programa
+		li $v0, 10
+		syscall
 	
 #FUNCIONES	
 	
 validarOpcion:
 	
-	move $t2, $zero
-	addi $t2, $t2, 4
+	loop:
+		move $t1, $zero
+		addi $t1, $t1, 4
+		
+		slti $t2, $t0, 1
+		beq $t2, 1, validacion
+		
+		slt, $t2, $t1, $t0
+		beq $t2, 1, validacion
+		
+		bne $t2, 1, exit_loop
 	
-	slti $t1, $t0, 1
-	beq $t3, 1, error
-	
-	slt $t1, $t2, $t0
-	beq $t3, 1, error
-
-	error:
+	validacion:
 		li $v0, 4
 		la $a0, err
 		syscall
-			
-	jr $ra
+		
+		li $v0, 5
+		syscall
+		
+		move $t0, $v0
+		
+		j loop
+		
+	exit_loop:
+		jr $ra
+	
+		
+		  
 
 	 
