@@ -8,7 +8,10 @@ o2: .asciiz "Ingrese un partido: \n"
 o3: .asciiz "TOP 3\n"
 err: .asciiz "Elija una opcion entre 1 y 4!\n"
 
-archivo: .asciiz "TablaIni.txt"
+archivo: .asciiz "D:\\Carlos\\Documents\\8VO SEMESTRE ESPOL\\Proyecto OC\\ProyectoOrganizacion\\TablaIni.txt"
+
+buffer: .space 128
+
 
 .globl main
 
@@ -57,6 +60,8 @@ main:
 		li $v0, 4
 		la $a0, o1
 		syscall
+		
+		jal leer_archivo
 	
 		j main
 	
@@ -84,7 +89,41 @@ main:
 		li $v0, 10
 		syscall
 	
-#FUNCIONES	
+#FUNCIONES
+
+leer_archivo:
+
+	addi $sp,$sp,-4
+	sw   $s0,0($sp)
+
+	li   $v0, 13       
+	la   $a0, archivo   
+	li   $a1, 0        
+	li   $a2, 0        
+	syscall            
+	move $s0, $v0     
+
+	#Guarda informacion en el buffer
+	li   $v0, 14       
+	move $a0, $s0    
+	la   $a1, buffer   
+	li   $a2,  1820  
+	syscall
+	
+	#Imprime el contenido del archivo
+	li $v0, 4
+	la, $a0, buffer
+	syscall      
+
+	#Cierra el archivo
+	li   $v0, 16       
+	move $a0, $s0   
+	syscall            
+
+	lw $s0,0($sp)
+	addi $sp,$sp,4
+
+	jr $ra
 	
 validarOpcion:
 	
