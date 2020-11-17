@@ -105,6 +105,10 @@ validarOpcion:
 		la $a0, err
 		syscall
 		
+		li $v0, 4
+		la $a0, ingreso
+		syscall
+		
 		li $v0, 5
 		syscall
 		
