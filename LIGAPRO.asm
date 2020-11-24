@@ -8,7 +8,7 @@ o2: .asciiz "Ingrese un partido: \n"
 o3: .asciiz "TOP 3\n"
 err: .asciiz "Elija una opcion entre 1 y 4!\n"
 
-archivo: .asciiz "D:\\Carlos\\Documents\\8VO SEMESTRE ESPOL\\Proyecto OC\\ProyectoOrganizacion\\TablaIni.txt"
+archivo: .asciiz "C:\\Users\\Leonardo\\Documents\\JoseEspol\\OrganizacionComputadores\\ProyectoOrganizacion\\TablaIni.txt"
 
 buffer: .space 128
 
@@ -76,7 +76,8 @@ main:
 		li $v0, 4
 		la $a0, o3
 		syscall
-	
+		
+		jal ordenarTabla
 		j main
 	
 	exit: 
@@ -90,7 +91,34 @@ main:
 		syscall
 	
 #FUNCIONES
+cargar_archivo:
+	addi $sp,$sp,-4
+	sw   $s0,0($sp)
 
+	li   $v0, 13       
+	la   $a0, archivo   
+	li   $a1, 0        
+	li   $a2, 0        
+	syscall            
+	move $s0, $v0     
+
+	#Guarda informacion en el buffer
+	li   $v0, 14       
+	move $a0, $s0    
+	la   $a1, buffer   
+	li   $a2,  1820  
+	syscall
+	
+	#Cierra el archivo
+	li   $v0, 16       
+	move $a0, $s0   
+	syscall            
+
+	lw $s0,0($sp)
+	addi $sp,$sp,4
+
+	jr $ra
+	
 leer_archivo:
 
 	addi $sp,$sp,-4
@@ -156,6 +184,23 @@ validarOpcion:
 		j loop
 		
 	exit_loop:
+		jr $ra
+
+ordenarTabla:
+	sortLoop:
+
+		addi $sp, $sp, -4
+		sw $ra, 0($sp)
+		jal cargar_archivo
+		
+		#Imprime el archivo cargado
+		li $v0, 4
+		la, $a0, buffer
+		la $a0, 8($a0)
+		syscall
+		#Devuelvo los valores originales en los espacios usados
+		lw $ra, 0($sp)
+		addi $sp, $sp, 4
 		jr $ra
 	
 		
