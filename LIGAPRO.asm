@@ -289,7 +289,12 @@ ordenarEquipos:
 	sw $s0, 4($sp)
 	sw $ra, 8($sp)	
 	
-	la $t0, lugar1
+	#li $t1, $t1, 0
+	la $t0, arrayEquipos($t1)
+	
+	
+	
+	
 	lw $t1, 0($t0)
 		  
 
@@ -313,3 +318,8 @@ ordenarEquipos:
 				syscall
 				
 				j obtenerEquipos
+	
+	lw $a0, 0($sp)
+	lw $s0, 4($sp)
+	lw $ra, 8($sp)	
+	addi $sp, $sp, 12
