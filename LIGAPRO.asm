@@ -4,14 +4,18 @@ menu: .asciiz "1. Ver tabla de posiciones\n2. Ingresar partido\n3. Mostrar TOP3\
 ingreso: .asciiz "Ingrese una opcion: "
 salida: .asciiz "Saliendo del programa...\n"
 o1: .asciiz "Tabla de la Liga Pro\n"
-o2: .asciiz "Ingrese un partido: \n"
+o2: .asciiz "***INGRESE UN PARTIDO***\n"
 o3: .asciiz "TOP 3\n"
 err: .asciiz "Elija una opcion entre 1 y 4!\n"
+equipo1: .asciiz "Ingrese el nombre del Equipo 1: \n"
+goles1: .asciiz "Ingrese la cantidad de goles del Equipo 1: \n"
+goles2: .asciiz "Ingrese la cantidad de goles del Equipo 2: \n"
+equipo2: .asciiz "Ingrese el nombre del Equipo 2: \n"
 
 coma: .asciiz ","
 salto: .asciiz "\n"
 archivo: 
-	.asciiz "C:\\Users\\Leonardo\\Documents\\JoseEspol\\OrganizacionComputadores\\ProyectoOrganizacion\\TablaIni.txt"
+	.asciiz "D:\\Carlos\\Documents\\8VO SEMESTRE ESPOL\\PROYECTO OC\\ProyectoOrganizacion\\TablaIni.txt"
 	.align 2
 
 lugar1: .space 32
@@ -37,6 +41,29 @@ arrayEquipos:
 newBuffer: .space 512 
 buffer: .space 128
 primerLugarTabla: .space 128
+
+#EQUIPOS
+e1: .asciiz "Aucas"
+e2: .asciiz "Barcelona"
+e3: .asciiz "D. Cuenca"
+e4: .asciiz "Delfin"
+e5: .asciiz "El Nacional"
+e6: .asciiz "Emelec"
+e7: .asciiz "Guayaquil City"
+e8: .asciiz "Ind. del Valle"
+e9: .asciiz "LDU Quito"
+e10: .asciiz "Liga (P)"
+e11: .asciiz "Macara" 
+e12: .asciiz "Mushuc Runa"
+e13: .asciiz "Olmedo"
+e14: .asciiz "Orense"
+e15: .asciiz "Tecnico Univ."
+e16: .asciiz "U.Catolica"
+
+arreglo_equipos:
+	.word e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12, e13, e14, e15, e16
+	.word 0
+
 
 .globl main
 
@@ -95,9 +122,68 @@ main:
 		j main
 	
 	opcion2: 
+		#TITULO
 		li $v0, 4
 		la $a0, o2
-		syscall 
+		syscall
+		
+		#PIDO EQUIPO 1
+		li $v0, 4
+		la $a0, equipo1
+		syscall
+		
+		#LEO EL VALOR
+		li $v0, 8
+		li $a1, 20
+		syscall
+		
+		#MUEVO EL VALOR A $s1
+		move $s1, $a0
+		
+		jal longStr
+		move $a2, $v0
+		
+		#Pido la cantidad de los goles del equipo1
+		li $v0, 4
+		la $a0, goles1
+		syscall
+		
+		#Leo el valor
+		li $v0, 5
+		syscall
+		
+		#Muevo el valor $t2
+		move $t2, $v0
+		
+		#Pido el nombre del equipo2
+		li $v0, 4
+		la $a0, equipo2
+		syscall
+		
+		#Leo el valor
+		li $v0, 8
+		li $a1, 20
+		syscall
+		
+		#Muevo el valor a $s2
+		move $s2, $a0
+		
+		jal longStr
+		move $a3, $v0
+		
+		#Pido la cantidad de los goles del equipo2
+		li $v0, 4
+		la $a0, goles2
+		syscall
+		
+		#Leo el valor
+		li $v0, 5
+		syscall
+		
+		#Muevo el valor a $t4
+		move $t4, $v0
+	
+		j main
 	
 		j main
 	
@@ -313,3 +399,100 @@ ordenarEquipos:
 				syscall
 				
 				j obtenerEquipos
+
+
+#Longitud de una cadena de caracteres
+#$a0 -> String 
+#$v0 -> longitud
+longStr:
+
+	addi $sp,$sp,-12
+        sw $t0, 0($sp)
+        sw $t1, 4($sp)
+        sw $ra, 8($sp)
+        
+        li $t0,0
+        
+        loopstr:
+        
+        	add $t1,$a0,$t0
+        	lbu $t1,0($t1)
+        	beq $t1,0,finlongstr
+        	addi $t0,$t0,1
+        	j loopstr
+        	
+        finlongstr:
+        
+        move $v0,$t0
+                
+        lw $t0,0($sp)
+        lw $t1,4($sp)
+        lw $ra, 8($sp)
+        addi $sp,$sp,12
+        
+        jr $ra
+        
+        
+#COMPARAR 2 STRINGS
+# a0 -> String1
+# a1 -> String2
+# a2 -> Longitud string1
+# a3 -> longitud string 2
+# $v0 -> 1 si son iguales, 0 si no lo son.
+
+compararStrings:
+
+	#Reservar la memoria
+ 	addi $sp, $sp, -24
+ 	sw $a0, 0($sp)
+ 	sw $a1, 4($sp)
+	sw $a2, 8($sp)
+	sw $t2, 12($sp)
+	sw $t3, 16($sp)
+ 	sw $ra, 20($sp) 
+
+	li $t9, 0
+	li $t8, 0
+	
+	#Loop para comparar 
+
+	slt $t7, $a2, $a3
+	slt $s7, $a3, $a3
+	beq $t7, 1, noiguales
+	beq $s7, 1, noiguales
+
+	loopComparacion:
+
+		beq $t9, $a2, iguales          #Si ya me recorrio $a2, quiere decir que son iguales
+		lbu $t2, ($a0) #obtener el prox char de a0
+		lbu $t3, ($a1) #obtener el prox char de a1
+
+		bne $t2, $t3, noiguales
+
+		addi $a0, $a0, 1 #Avanzo 1char en a0
+		addi $a1, $a1, 1 #Avanzo 1char en a1
+		addi $t9, $t9, 1 #Avanzo contador
+
+		j loopComparacion
+	
+	finComparacion:
+
+ 		lw $a0,0($sp)
+ 		lw $a1,4($sp)
+ 		lw $a2,8($sp)
+ 		lw $t2, 12($sp)
+		lw $t3, 16($sp)
+ 		lw $ra, 20($sp) 
+ 		addi $sp,$sp,24
+ 		jr $ra
+ 	
+	#No son iguales
+	noiguales:
+
+		li $v0,0
+		j finComparacion
+
+	#Son iguales
+	iguales:
+		li $v0,1
+		j finComparacion
