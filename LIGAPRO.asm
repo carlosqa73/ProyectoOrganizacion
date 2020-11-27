@@ -8,10 +8,35 @@ o2: .asciiz "Ingrese un partido: \n"
 o3: .asciiz "TOP 3\n"
 err: .asciiz "Elija una opcion entre 1 y 4!\n"
 
-archivo: .asciiz "C:\\Users\\Leonardo\\Documents\\JoseEspol\\OrganizacionComputadores\\ProyectoOrganizacion\\TablaIni.txt"
+coma: .asciiz ","
+salto: .asciiz "\n"
+archivo: 
+	.asciiz "C:\\Users\\Leonardo\\Documents\\JoseEspol\\OrganizacionComputadores\\ProyectoOrganizacion\\TablaIni.txt"
+	.align 2
 
+lugar1: .space 32
+lugar2: .space 32
+lugar3: .space 32
+lugar4: .space 32
+lugar5: .space 32
+lugar6: .space 32
+lugar7: .space 32
+lugar8: .space 32
+lugar9: .space 32
+lugar10: .space 32
+lugar11: .space 32
+lugar12: .space 32
+lugar13: .space 32
+lugar14: .space 32
+lugar15: .space 32
+lugar16: .space 32
+ 
+arrayEquipos:
+	.word lugar1, lugar2, lugar3, lugar4, lugar5, lugar6, lugar7, lugar8, lugar9, lugar10, lugar11, lugar12, lugar13, lugar14, lugar15, lugar16
+
+newBuffer: .space 512 
 buffer: .space 128
-
+primerLugarTabla: .space 128
 
 .globl main
 
@@ -19,6 +44,10 @@ buffer: .space 128
 #Main
 
 main: 
+	jal cargar_archivo		#Llama a la funcion que carga el archivo en memoria
+	jal separarValores 		#Llama a la funcion que carga los datos en el array
+	
+	
 	#mensaje de inicio
 	li $v0, 4
 	la $a0, titulo
@@ -77,7 +106,7 @@ main:
 		la $a0, o3
 		syscall
 		
-		jal ordenarTabla
+		jal separarValores
 		j main
 	
 	exit: 
@@ -186,24 +215,101 @@ validarOpcion:
 	exit_loop:
 		jr $ra
 
-ordenarTabla:
-	sortLoop:
+separarValores:
 
-		addi $sp, $sp, -4
-		sw $ra, 0($sp)
-		jal cargar_archivo
-		
-		#Imprime el archivo cargado
-		li $v0, 4
-		la, $a0, buffer
-		la $a0, 8($a0)
-		syscall
-		#Devuelvo los valores originales en los espacios usados
-		lw $ra, 0($sp)
-		addi $sp, $sp, 4
-		jr $ra
+	addi $sp, $sp, -12
+	sw $a0, 0($sp)
+	sw $s0, 4($sp)
+	sw $ra, 8($sp)
 	
+	la $t0, buffer		#muevo la direccion de mis datos a t0 para poder usarlo
+	addi $t0, $t0, 39	#Sumo 38 que es el total de bytes de la primera linea y asi saltarmela
+	#guardando el salto de linea
+	la $a0, salto
+	lb $a0, ($a0)
+	move $t1, $a0  		# $t1 = "\n"
+	#guardando la coma
+	la $a0, coma
+	lb $a0, ($a0)
+	move $t2, $a0 		#t2 = ","
+	
+	addi $t6, $t6, 0	#Este valor es un contador de bytes leidos (Inicia en 0)
+	
+	addi $t3, $t3, 0 	#$t3 = 0 y es usado para contar la cantidad de comas
+	addi $t4, $t4, 0	#$t4 = 0 y es usado para contar los saltos de linea
+	obtenerEquipos:		#Loop que lee el archivo cargado en memoria y pregunta por comas y saltos de linea
 		
+		lbu $t5, 0($t0)			#asignando caracteres a t5 para leerlos
+		li $v0, 11
+		move $a0, $t5
+		syscall
+		
+		#beq $t5, $t2, hayComa			#if(t0[i] = ",") go to hayComa
+		beq $t4, 16, return			#Si termina de leer las 16 filas retorna
+		beq $t5, $t1, haySalto 			#if(t0[i] ="\n") go to haySalto
+		#Si no hay salto, guardo las lineas
+		lw $t7, arrayEquipos($t8)   		#Gyardo la primera direccion de array en t7
+		add $t7, $t7, $t6			#Sumo la direccion del espacio actual de array con los bytes leidos y lo guardo en $t7
+		sb $t5, 0($t7)				#Guardo el byte leido en la posicion obetenido del t7 array[0][0] = t5
+		#sb $t5, lugar1($t6)
+		#sb $t5, primerLugarTabla($t6)
+		addi $t6, $t6, 1		#Sumo el contador de bytes leidos en 1 (t6++)
+		#beq $t3, 1, obtenerEquipos	#Si el numero de comas no es igual a 1, entonces no estamos en puntos	
+		addi $t0, $t0, 1    		#Sumo en 1 la direccion de memoria de t0
+		j obtenerEquipos
+
+				
+		haySalto:
+			 
+			lw $t7, arrayEquipos($t8) 	#guardo la direccion de memoria del primer lugar del array en $t7
+			addi $t4, $t4, 1		#Sumo en 1 el numero de lineas t4++
+			li $t3, 0			#Seteo en 0 la cantidad de comas cuando encontramos un salto de linea
+			li $t6, 0			#Seteo en 0 la cantidad de bytes contados
+			addi $t0, $t0, 1    		#Sumo en 1 la direccion de memoria de t0
+			addi $t8, $t8, 4
+			j obtenerEquipos
+	
+	return:
+		li $v0, 4
+		la $a0, lugar2
+		syscall 
+		
+		
+		
+		lw $a0, 0($sp)
+		lw $s0, 4($sp)
+		lw $ra, 8($sp)
+		addi $sp, $sp, 12
+		jr $ra
+
+	
+ordenarEquipos:
+	addi $sp, $sp, -12
+	sw $a0, 0($sp)
+	sw $s0, 4($sp)
+	sw $ra, 8($sp)	
+	
+	la $t0, lugar1
+	lw $t1, 0($t0)
 		  
 
-	 
+	 	noHayComa:
+			lbu $t5, 0($t0)			#asignando caracteres a t5 para leerlos
+			beq $t3, 1, obtenerEquipos	#Si el numero de comas no es igual a 1, entonces no estamos en puntos
+			
+			addi $t0, $t0,1    		#Sumo en 1 la direccion de memoria de t0
+			
+		hayComa:
+			addi $t3, $t3, 1		#Sumo en 1 la cantidad de comas 
+			addi $t0, $t0, 1		#Avanzo al siguiente caracter 
+			beq  $t3, 1, puntoDeEquipo	#Si estoy en la coma 1 los siguientes caracteres seran los puntos de cada equipo
+			
+			puntoDeEquipo:
+				sb $t0, primerLugarTabla
+				addi $t0, $t0, 1
+				
+				li $v0, 4
+				la $a0, 0($t0)
+				syscall
+				
+				j obtenerEquipos
