@@ -7,10 +7,10 @@ o1: .asciiz "Tabla de la Liga Pro\n"
 o2: .asciiz "***INGRESE UN PARTIDO***\n"
 o3: .asciiz "TOP 3\n"
 err: .asciiz "Elija una opcion entre 1 y 4!\n"
-equipo1: .asciiz "Ingrese el nombre del Equipo 1: \n"
-goles1: .asciiz "Ingrese la cantidad de goles del Equipo 1: \n"
-goles2: .asciiz "Ingrese la cantidad de goles del Equipo 2: \n"
-equipo2: .asciiz "Ingrese el nombre del Equipo 2: \n"
+equipo1: .asciiz "Ingrese el nombre del Equipo 1: "
+goles1: .asciiz "Ingrese la cantidad de goles del Equipo 1: "
+goles2: .asciiz "Ingrese la cantidad de goles del Equipo 2: "
+equipo2: .asciiz "Ingrese el nombre del Equipo 2: "
 
 coma: .asciiz ","
 salto: .asciiz "\n"
@@ -71,9 +71,10 @@ arreglo_equipos:
 #Main
 
 main: 
-	jal cargar_archivo		#Llama a la funcion que carga el archivo en memoria
+	jal leer_archivo		#Llama a la funcion que carga el archivo en memoria
 	jal separarValores 		#Llama a la funcion que carga los datos en el array
-	
+
+iniciomenu:
 	
 	#mensaje de inicio
 	li $v0, 4
@@ -116,10 +117,8 @@ main:
 		li $v0, 4
 		la $a0, o1
 		syscall
-		
-		jal leer_archivo
 	
-		j main
+		j iniciomenu
 	
 	opcion2: 
 		#TITULO
@@ -182,18 +181,15 @@ main:
 		
 		#Muevo el valor a $t4
 		move $t4, $v0
-	
-		j main
-	
-		j main
+		
+		j iniciomenu
 	
 	opcion3: 
 		li $v0, 4
 		la $a0, o3
 		syscall
 		
-		jal separarValores
-		j main
+		j iniciomenu
 	
 	exit: 
 		#mensaje de salida
@@ -206,6 +202,7 @@ main:
 		syscall
 	
 #FUNCIONES
+
 cargar_archivo:
 	addi $sp,$sp,-4
 	sw   $s0,0($sp)
@@ -326,9 +323,6 @@ separarValores:
 	obtenerEquipos:		#Loop que lee el archivo cargado en memoria y pregunta por comas y saltos de linea
 		
 		lbu $t5, 0($t0)			#asignando caracteres a t5 para leerlos
-		li $v0, 11
-		move $a0, $t5
-		syscall
 		
 		#beq $t5, $t2, hayComa			#if(t0[i] = ",") go to hayComa
 		beq $t4, 16, return			#Si termina de leer las 16 filas retorna
@@ -356,11 +350,6 @@ separarValores:
 			j obtenerEquipos
 	
 	return:
-		li $v0, 4
-		la $a0, lugar2
-		syscall 
-		
-		
 		
 		lw $a0, 0($sp)
 		lw $s0, 4($sp)
