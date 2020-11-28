@@ -7,10 +7,11 @@ o1: .asciiz "Tabla de la Liga Pro\n"
 o2: .asciiz "***INGRESE UN PARTIDO***\n"
 o3: .asciiz "TOP 3\n"
 err: .asciiz "Elija una opcion entre 1 y 4!\n"
-equipo1: .asciiz "Ingrese el nombre del Equipo 1: "
+pedirequipo1: .asciiz "Ingrese el nombre del Equipo 1: "
 goles1: .asciiz "Ingrese la cantidad de goles del Equipo 1: "
 goles2: .asciiz "Ingrese la cantidad de goles del Equipo 2: "
-equipo2: .asciiz "Ingrese el nombre del Equipo 2: "
+pedirequipo2: .asciiz "Ingrese el nombre del Equipo 2: "
+nExiste: .asciiz "El equipo ingresado no existe en el arreglo.\n"
 
 coma: .asciiz ","
 salto: .asciiz "\n"
@@ -18,22 +19,22 @@ archivo:
 	.asciiz "D:\\Carlos\\Documents\\8VO SEMESTRE ESPOL\\PROYECTO OC\\ProyectoOrganizacion\\TablaIni.txt"
 	.align 2
 
-lugar1: .space 32
-lugar2: .space 32
-lugar3: .space 32
-lugar4: .space 32
-lugar5: .space 32
-lugar6: .space 32
-lugar7: .space 32
-lugar8: .space 32
-lugar9: .space 32
-lugar10: .space 32
-lugar11: .space 32
-lugar12: .space 32
-lugar13: .space 32
-lugar14: .space 32
-lugar15: .space 32
-lugar16: .space 32
+lugar1: .space 64
+lugar2: .space 64
+lugar3: .space 64
+lugar4: .space 64
+lugar5: .space 64
+lugar6: .space 64
+lugar7: .space 64
+lugar8: .space 64
+lugar9: .space 64
+lugar10: .space 64
+lugar11: .space 64
+lugar12: .space 64
+lugar13: .space 64
+lugar14: .space 64
+lugar15: .space 64
+lugar16: .space 64
  
 arrayEquipos:
 	.word lugar1, lugar2, lugar3, lugar4, lugar5, lugar6, lugar7, lugar8, lugar9, lugar10, lugar11, lugar12, lugar13, lugar14, lugar15, lugar16
@@ -41,6 +42,9 @@ arrayEquipos:
 newBuffer: .space 512 
 buffer: .space 128
 primerLugarTabla: .space 128
+
+temp: .space 32
+temp2: .space 32
 
 #EQUIPOS
 e1: .asciiz "Aucas"
@@ -71,7 +75,7 @@ arreglo_equipos:
 #Main
 
 main: 
-	jal leer_archivo		#Llama a la funcion que carga el archivo en memoria
+	jal cargar_archivo		#Llama a la funcion que carga el archivo en memoria
 	jal separarValores 		#Llama a la funcion que carga los datos en el array
 
 iniciomenu:
@@ -117,6 +121,8 @@ iniciomenu:
 		li $v0, 4
 		la $a0, o1
 		syscall
+		
+		jal leer_archivo
 	
 		j iniciomenu
 	
@@ -128,7 +134,7 @@ iniciomenu:
 		
 		#PIDO EQUIPO 1
 		li $v0, 4
-		la $a0, equipo1
+		la $a0, pedirequipo1
 		syscall
 		
 		#LEO EL VALOR
@@ -141,6 +147,7 @@ iniciomenu:
 		
 		jal longStr
 		move $a2, $v0
+		sub $a2, $a2, 1
 		
 		#Pido la cantidad de los goles del equipo1
 		li $v0, 4
@@ -151,12 +158,12 @@ iniciomenu:
 		li $v0, 5
 		syscall
 		
-		#Muevo el valor $t2
-		move $t2, $v0
+		#Muevo el valor $s3
+		move $s3, $v0
 		
 		#Pido el nombre del equipo2
 		li $v0, 4
-		la $a0, equipo2
+		la $a0, pedirequipo2
 		syscall
 		
 		#Leo el valor
@@ -169,6 +176,7 @@ iniciomenu:
 		
 		jal longStr
 		move $a3, $v0
+		sub $a3, $a3, 1
 		
 		#Pido la cantidad de los goles del equipo2
 		li $v0, 4
@@ -179,8 +187,19 @@ iniciomenu:
 		li $v0, 5
 		syscall
 		
-		#Muevo el valor a $t4
-		move $t4, $v0
+		#Muevo el valor a $s4
+		move $s4, $v0
+		
+		jal IndiceEquipo1
+		move $s5, $v0
+		
+		jal IndiceEquipo2
+		move $s6, $v0
+		
+		li $s1, 0
+		li $s2, 0
+		li $s3, 0
+		li $s4, 0
 		
 		j iniciomenu
 	
@@ -204,66 +223,61 @@ iniciomenu:
 #FUNCIONES
 
 cargar_archivo:
-	addi $sp,$sp,-4
-	sw   $s0,0($sp)
+    addi $sp,$sp,-4
+    sw   $s0,0($sp)
 
-	li   $v0, 13       
-	la   $a0, archivo   
-	li   $a1, 0        
-	li   $a2, 0        
-	syscall            
-	move $s0, $v0     
+    li   $v0, 13
+    la   $a0, archivo
+    li   $a1, 0
+    li   $a2, 0
+    syscall
+    move $s0, $v0
 
-	#Guarda informacion en el buffer
-	li   $v0, 14       
-	move $a0, $s0    
-	la   $a1, buffer   
-	li   $a2,  1820  
-	syscall
-	
-	#Cierra el archivo
-	li   $v0, 16       
-	move $a0, $s0   
-	syscall            
+    #Guarda informacion en el buffer
+    li   $v0, 14
+    move $a0, $s0
+    la   $a1, buffer
+    li   $a2,  1820
+    syscall
 
-	lw $s0,0($sp)
-	addi $sp,$sp,4
+    #Cierra el archivo
+    li   $v0, 16
+    move $a0, $s0
+    syscall
 
-	jr $ra
-	
+    lw $s0,0($sp)
+    addi $sp,$sp,4
+
+    jr $ra
+
 leer_archivo:
 
-	addi $sp,$sp,-4
-	sw   $s0,0($sp)
+    addi $sp,$sp,-4
+    sw   $s0,0($sp)
 
-	li   $v0, 13       
-	la   $a0, archivo   
-	li   $a1, 0        
-	li   $a2, 0        
-	syscall            
-	move $s0, $v0     
+    li $t1, 0                #total de lineas
+    li $t2, 0                #offset para el array
 
-	#Guarda informacion en el buffer
-	li   $v0, 14       
-	move $a0, $s0    
-	la   $a1, buffer   
-	li   $a2,  1820  
-	syscall
-	
-	#Imprime el contenido del archivo
-	li $v0, 4
-	la, $a0, buffer
-	syscall      
+    for:
+        beq $t1, 16, exitLeer        #Si t1 = 16, acabo de leer el archivo
+        lw $t0, arrayEquipos($t2)        #Guardo en t0 la direccion del primer elemento del array
 
-	#Cierra el archivo
-	li   $v0, 16       
-	move $a0, $s0   
-	syscall            
+        li $v0, 4
+        la $a0, ($t0)
+        syscall
 
-	lw $s0,0($sp)
-	addi $sp,$sp,4
+        li $v0, 4            #Imprimo el salto de linea despues de leer cada linea
+        la $a0, salto
+        syscall
 
-	jr $ra
+        addi $t2, $t2, 4
+        addi $t1, $t1, 1
+        j for
+
+    exitLeer:
+        lw $s0,0($sp)
+        addi $sp,$sp,4
+        jr $ra
 	
 validarOpcion:
 	
@@ -388,6 +402,195 @@ ordenarEquipos:
 				syscall
 				
 				j obtenerEquipos
+				
+				
+#OBTIENE EL INDICE EN LA LISTA DE FILAS DEL EQUIPO 1
+#s1 -> equipo1
+#a2 -> longStr del equipo1
+IndiceEquipo1:
+
+	addi $sp, $sp, -56
+	sw $a0, 0($sp)
+	sw $a1, 4($sp)
+	sw $a2, 8($sp)
+	sw $a3, 12($sp)
+	sw $t1, 16($sp)
+	sw $t2, 20($sp)
+	sw $t3, 24($sp)
+	sw $t4, 28($sp)
+	sw $t5, 32($sp)
+	sw $t6, 36($sp)
+	sw $t7, 40($sp)
+	sw $t8, 44($sp)
+	sw $t9, 48($sp)
+	sw $ra, 52($sp)
+	
+	add $t0, $zero, $zero #contador = 0
+	add $t2, $zero, $zero #indice
+	
+	la $t9, coma
+	lb $t9, ($t9)
+		
+	#RECORRER EL ARREGLO DE FILAS
+	forModiFila:
+		
+		li $t6, 0
+		slti $t1, $t0, 16
+		beq $t1, 0, finfor
+		
+		sll $t3, $t2, 2
+		lw $t4, arrayEquipos($t3)
+		
+		forBytes:
+			lbu $t5, 0($t4)
+			beq $t5, $t9, foundComa
+	
+			sb $t5, temp($t6)
+			addi $t4, $t4, 1
+			addi $t6, $t6, 1
+			
+			j forBytes
+		
+		foundComa:
+			
+			move $a0, $s1
+			la $t8, temp
+			move $a1, $t8
+			
+			jal compararStrings
+			
+			move $t7, $v0
+			beq $t7, 1, lMemoria
+			
+			addi $t2, $t2, 1
+			addi $t0, $t0, 1
+			
+			j forModiFila
+		
+		
+	finfor:
+		li $v0, 4
+		la $a0, nExiste
+		syscall
+		j lMemoria
+		
+	lMemoria:	
+	
+		move $v0, $t2
+	
+		lw $a0, 0($sp)
+		lw $a1, 4($sp)
+		lw $a2, 8($sp)
+		lw $a3, 12($sp)
+		lw $t1, 16($sp)
+		lw $t2, 20($sp)
+		lw $t3, 24($sp)
+		lw $t4, 28($sp)
+		lw $t5, 32($sp)
+		lw $t6, 36($sp)
+		lw $t7, 40($sp)
+		lw $t8, 44($sp)
+		lw $t9, 48($sp)
+		lw $ra, 52($sp)
+		addi $sp, $sp, 56
+		
+		jr $ra
+		
+	
+#MODIFICAR LOS DATOS DE UNA FILA, SEGUN EL NOMBRE DEL EQUIPO
+#s2 -> equipo2
+#$a2 -> longStr equipo2
+IndiceEquipo2:
+
+	addi $sp, $sp, -56
+	sw $a0, 0($sp)
+	sw $a1, 4($sp)
+	sw $a2, 8($sp)
+	sw $a3, 12($sp)
+	sw $t1, 16($sp)
+	sw $t2, 20($sp)
+	sw $t3, 24($sp)
+	sw $t4, 28($sp)
+	sw $t5, 32($sp)
+	sw $t6, 36($sp)
+	sw $t7, 40($sp)
+	sw $t8, 44($sp)
+	sw $t9, 48($sp)
+	sw $ra, 52($sp)
+	
+	add $t0, $zero, $zero #contador = 0
+	add $t2, $zero, $zero #indice
+	
+	li $t3, 0
+	li $t5, 0
+	la $t9, coma
+	lb $t9, ($t9)
+		
+	#RECORRER EL ARREGLO DE FILAS
+	forModiFila2:
+		
+		li $t6, 0
+		slti $t1, $t0, 16
+		beq $t1, 0, finfor2
+		
+		sll $t3, $t2, 2
+		lw $t4, arrayEquipos($t3)
+		
+		forBytes2:
+			lbu $t5, 0($t4)
+			beq $t5, $t9, foundComa2
+	
+			sb $t5, temp2($t6)
+			addi $t4, $t4, 1
+			addi $t6, $t6, 1
+			
+			j forBytes2
+		
+		foundComa2:
+			
+			move $a0, $s2
+			la $t8, temp2
+			move $a1, $t8
+			move $a2, $a3
+			
+			jal compararStrings
+			
+			move $t7, $v0
+			beq $t7, 1, lMemoria2
+			
+			addi $t2, $t2, 1
+			addi $t0, $t0, 1
+			
+			j forModiFila2
+		
+		
+	finfor2:
+		li $v0, 4
+		la $a0, nExiste
+		syscall
+		j lMemoria2
+		
+	lMemoria2:	
+	
+		move $v0, $t2
+	
+		lw $a0, 0($sp)
+		lw $a1, 4($sp)
+		lw $a2, 8($sp)
+		lw $a3, 12($sp)
+		lw $t1, 16($sp)
+		lw $t2, 20($sp)
+		lw $t3, 24($sp)
+		lw $t4, 28($sp)
+		lw $t5, 32($sp)
+		lw $t6, 36($sp)
+		lw $t7, 40($sp)
+		lw $t8, 44($sp)
+		lw $t9, 48($sp)
+		lw $ra, 52($sp)
+		addi $sp, $sp, 56
+		
+		jr $ra
 
 
 #Longitud de una cadena de caracteres
@@ -432,13 +635,15 @@ longStr:
 compararStrings:
 
 	#Reservar la memoria
- 	addi $sp, $sp, -24
+ 	addi $sp, $sp, -32
  	sw $a0, 0($sp)
  	sw $a1, 4($sp)
 	sw $a2, 8($sp)
 	sw $t2, 12($sp)
 	sw $t3, 16($sp)
  	sw $ra, 20($sp) 
+ 	sw $t9, 24($sp)
+ 	sw $t7, 28($sp)
 
 	li $t9, 0
 	li $t8, 0
@@ -472,7 +677,9 @@ compararStrings:
  		lw $t2, 12($sp)
 		lw $t3, 16($sp)
  		lw $ra, 20($sp) 
- 		addi $sp,$sp,24
+ 		lw $t9, 24($sp)
+ 		lw $t7, 28($sp)
+ 		addi $sp,$sp,32
  		jr $ra
  	
 	#No son iguales
